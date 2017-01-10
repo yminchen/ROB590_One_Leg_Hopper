@@ -14,7 +14,7 @@
 %% INITIALIZATION:
 clear,clc
 % add path (so we can have access to functions in folders)
-addpath('EOM','EventsFcn');
+addpath('EOM','EventsFcn','Controller','Animation');
 
 % settings
 fflag = 1;          % flag to enable figure plot (don't enable this with animation at the same time)
