@@ -2,7 +2,7 @@
 
 % Author: Yu-Ming Chen, University of Michigan, Ann Arbor
 % Email: yminchen@umich.edu
-% Date: 01/01/2017
+% Date: 01/08/2017
 
 % This code is modified from an example 
 % "Simulation and Animation of a Linear and Nonlinear Pendulum Model"
@@ -29,9 +29,9 @@ xy_cor_flag = 0;    % flag to enable using x-y coordinate for ode45 during stanc
 m1 = 1;             % body mass (kg)
 L_m1 = 0.5;         % body length (m)
 I1 = m1*L_m1^2/12;  % body inertia (kg*m^2)
-m2 = 0.01;           % foot mass (kg)
+m2 = 0.01;          % foot mass (kg)
 L_sp0 = 0.7;        % spring original length (m)
-k = 500;           % spring constant   
+k = 500;            % spring constant   
         % higher stiffness improves stability.
         % if you want higher speed, you need higher k.
 d = 10;             % spring damping 
@@ -56,7 +56,7 @@ kp_pos = 2;
         % kp_pos depends on max_dx_des.
 kd_pos = 1.5;
 % Raibert controller parameter
-kp_rai = 0.04;    % Raibert sytle controller
+kp_rai = 0.04;      % Raibert sytle controller
         % kp_rai depends on H (the height) and k (the stiffness).
         % For larger desired speed, you need higher kp_rai.
         % But the larger kp_rai is, the more unstable when changing speed.
@@ -79,9 +79,11 @@ tspan = T0:tstep:t_evMax;   % initial time vector
 % Flight phase has 10 states (5 DOF), and stance phase 6 (3 DOF):
 % 1. flight phase
 x0 = [  0       % x1    (m)     ; horizontal position of body (m1) 
-        1.2%L_sp0-0.0049+0.0001     % y1    (m)     ; vertical position of body (m1)
+        1.2     % y1    (m)     ; vertical position of body (m1)
+        %L_sp0-0.0049+0.0001
         0       % theta (rad)   ; angle of m1 w.r.t horizontal line
-        L_sp0%L_sp0-0.0049   % s     (m)     ; length of spring
+        L_sp0   % s     (m)     ; length of spring
+        %L_sp0-0.0049
         0       % phi   (rad)   ; angle of spring w.r.t the norm of body (m1)
         0       % d_x1  (m/s)
         0       % d_y1  (m/s)
