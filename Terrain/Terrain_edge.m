@@ -17,4 +17,23 @@ elseif terrain_label == 2
             9   2
             11  0];
     
+elseif terrain_label == 3
+    edge = [1   2
+            1.1 0
+            2   0
+            4   0.5
+            5   1
+            6   1
+            7   0.75
+            8   1.25
+            9   1
+            11  0];
+    
 end
+
+
+% % just for testing, should be deleted later
+% if terrain_label == 0
+%     edge = [-2 0
+%             2 4];
+% end

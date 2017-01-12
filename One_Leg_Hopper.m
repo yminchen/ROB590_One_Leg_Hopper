@@ -17,7 +17,7 @@ clear,clc
 addpath('EOM','EventsFcn','Controller','Animation','Terrain');
 
 % settings
-fflag = 1;          % flag to enable figure plot (don't enable this with animation at the same time)
+fflag = 0;          % flag to enable figure plot (don't enable this with animation at the same time)
 aflag = not(fflag); % flag to enable anima3tion creation
 vflag = not(fflag); % flag to enable animation recording (create a avi video)
 fignum = 1;         % figure number
@@ -36,7 +36,7 @@ k = 500;            % spring constant
         % if you want higher speed, you need higher k.
 d = 10;             % spring damping 
 g = 9.81;           % gravitational constant (m/s^2)
-ter_i = 2;          % terrain label
+ter_i = 0;          % terrain label
 
 % controller parameters
 thrust_flag = 0;
@@ -147,12 +147,11 @@ while T(size(T,1)) < Tf
         tspan = t(n) : tstep : t(n)+t_evMax;
         x0 = x(n, :);
         
-        
         % If the point mass falls on the ground, stop the simulation.
         if (size(te,1)>0) && (ie(size(ie,1))==2)
             break;
         % If the foot is hitting the ground, switch to stance phase.
-        elseif size(te,1)>0 
+        elseif (size(te,1)>0) && (ie(size(ie,1))==1)
             phase = 1;
             % print
             display('switch to stance compression phase');
@@ -181,6 +180,9 @@ while T(size(T,1)) < Tf
                 cy = X(lenX,3) - contact_pos(2);
                 x0(6) = (-X(lenX,2)*cos(X(lenX,5))-X(lenX,4)*sin(X(lenX,5)))/((cx^2+cy^2)^0.5) ;
             end
+        elseif (size(te,1)>0)
+            display('coming out from the ground. incorrect dynamics.');
+%             break;
         end
         
     %%% stance phase %%%
