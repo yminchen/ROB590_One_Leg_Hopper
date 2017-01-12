@@ -17,7 +17,7 @@ clear,clc
 addpath('EOM','EventsFcn','Controller','Animation');
 
 % settings
-fflag = 1;          % flag to enable figure plot (don't enable this with animation at the same time)
+fflag = 0;          % flag to enable figure plot (don't enable this with animation at the same time)
 aflag = not(fflag); % flag to enable anima3tion creation
 vflag = not(fflag); % flag to enable animation recording (create a avi video)
 fignum = 1;         % figure number
@@ -156,7 +156,8 @@ while T(size(T,1)) < Tf
             display('switch to stance compression phase');
             
             % contact point
-            contact_pos = [x(n,1) + x(n,4)*sin(x(n,3)+x(n,5)); 0];
+            contact_pos = [ x(n,1) + x(n,4)*sin(x(n,3)+x(n,5)); 
+                            x(n,2) - x(n,4)*cos(x(n,3)+x(n,5))];
             % transition info
             prev_t = t(n);
             % flight controller info
@@ -197,9 +198,9 @@ while T(size(T,1)) < Tf
         % if use rad-tan coordinate for stance phase
         else
             if thrust_flag
-                options = odeset('Events', @(t,x) EventsFcn_Tstance_rad_tan(t,x,k,L_sp0,m2));
+                options = odeset('Events', @(t,x) EventsFcn_Tstance_rad_tan(t,x,contact_pos,k,L_sp0,m2));
             else
-                options = odeset('Events', @(t,x) EventsFcn_Cstance_rad_tan(t,x));
+                options = odeset('Events', @(t,x) EventsFcn_Cstance_rad_tan(t,x,contact_pos));
             end
 
             % transform to radius-tangent coordinate
@@ -220,7 +221,7 @@ while T(size(T,1)) < Tf
 
             % transform to x-y coordinate
             x = [   contact_pos(1) - x(:,1).*sin(x(:,2)),...
-                    x(:,1).*cos(x(:,2)),...
+                    contact_pos(2) + x(:,1).*cos(x(:,2)),...
                     x(:,2)-x(:,3),...
                     x(:,1),...
                     x(:,3),...
@@ -276,7 +277,8 @@ while T(size(T,1)) < Tf
                     0.5*I1*(x(n,8))^2 + 0.5*k*(L_sp_low - L_sp0)^2;
             % calculate desired energy
             dL = abs(-x_td(6)*sin(x_td(3)+x_td(5))+x_td(7)*cos(x_td(3)+x_td(5))); %length speed at touch down
-            E_des = m1*g*H + pi/4*d*dL*(L_sp0-L_sp_low) + 0.5*m1*dx_des^2;
+            E_des = m1*g*(H+Terrain(x(n,1)+x(n,6)*t_prev_stance/2))...
+                + pi/4*d*dL*(L_sp0-L_sp_low) + 0.5*m1*dx_des^2;
             
             k_des = k + 2*(E_des-E_low)/(L_sp0-L_sp_low)^2;
             if k_des < k
@@ -403,9 +405,13 @@ if aflag
         axis equal; axis([boarderL boarderR -0.1 boarderT])
 
         % Plot ground
-        fill([boarderL boarderR boarderR boarderL],[0,0,-0.1,-0.1], [0 0 0], 'EdgeColor',[0 0 0]);
+        groundL = floor(boarderL);
+        groundR = ceil(boarderR);
+        for i = groundL:groundR-1
+            fill([i i+1 i+1 i],[Terrain(i) Terrain(i+1) -0.1 -0.1],[0 0 0],'EdgeColor',[0 0 0]);
+        end
         % Plot target position
-        scatter(target_pos,0,50,'MarkerEdgeColor','b',...
+        scatter(target_pos,Terrain(target_pos),50,'MarkerEdgeColor','b',...
                   'MarkerFaceColor','g',...
                   'LineWidth',1);
         
