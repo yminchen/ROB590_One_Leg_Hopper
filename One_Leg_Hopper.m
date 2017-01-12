@@ -14,10 +14,10 @@
 %% INITIALIZATION:
 clear,clc
 % add path (so we can have access to functions in folders)
-addpath('EOM','EventsFcn','Controller','Animation');
+addpath('EOM','EventsFcn','Controller','Animation','Terrain');
 
 % settings
-fflag = 0;          % flag to enable figure plot (don't enable this with animation at the same time)
+fflag = 1;          % flag to enable figure plot (don't enable this with animation at the same time)
 aflag = not(fflag); % flag to enable anima3tion creation
 vflag = not(fflag); % flag to enable animation recording (create a avi video)
 fignum = 1;         % figure number
@@ -36,6 +36,7 @@ k = 500;            % spring constant
         % if you want higher speed, you need higher k.
 d = 10;             % spring damping 
 g = 9.81;           % gravitational constant (m/s^2)
+ter_i = 2;          % terrain label
 
 % controller parameters
 thrust_flag = 0;
@@ -65,7 +66,7 @@ k_f = [kp_pos kd_pos kp_rai];  % f stands for flight
 
 % simulation parameters
 T0 = 0;
-Tf = 16;
+Tf = 20;
 % ode45 events parameters
 t_evMax = 1;
 % initial simulation parameters
@@ -79,7 +80,8 @@ tspan = T0:tstep:t_evMax;   % initial time vector
 % Flight phase has 10 states (5 DOF), and stance phase 6 (3 DOF):
 % 1. flight phase
 x0 = [  0       % x1    (m)     ; horizontal position of body (m1) 
-        1.2     % y1    (m)     ; vertical position of body (m1)
+        1.2+Terrain(0,ter_i)
+                % y1    (m)     ; vertical position of body (m1)
         %L_sp0-0.0049+0.0001
         0       % theta (rad)   ; angle of m1 w.r.t horizontal line
         L_sp0   % s     (m)     ; length of spring
@@ -130,7 +132,7 @@ while T(size(T,1)) < Tf
     %%% flight phase %%%
     if phase == 0 
         
-        options = odeset('Events', @(t,x) EventsFcn_flight(t,x));
+        options = odeset('Events', @(t,x) EventsFcn_flight(t,x,ter_i));
         [t,x,te,xe,ie] = ode45(@(t,x) F_freefall(t,x,d,k,L_sp0,L_m1,m1,I1,m2,...
             t_prev_stance,target_pos,k_f,max_dx_des), tspan, x0, options);
         
@@ -198,9 +200,9 @@ while T(size(T,1)) < Tf
         % if use rad-tan coordinate for stance phase
         else
             if thrust_flag
-                options = odeset('Events', @(t,x) EventsFcn_Tstance_rad_tan(t,x,contact_pos,k,L_sp0,m2));
+                options = odeset('Events', @(t,x) EventsFcn_Tstance_rad_tan(t,x,contact_pos,ter_i,k,L_sp0,m2));
             else
-                options = odeset('Events', @(t,x) EventsFcn_Cstance_rad_tan(t,x,contact_pos));
+                options = odeset('Events', @(t,x) EventsFcn_Cstance_rad_tan(t,x,contact_pos,ter_i));
             end
 
             % transform to radius-tangent coordinate
@@ -277,7 +279,7 @@ while T(size(T,1)) < Tf
                     0.5*I1*(x(n,8))^2 + 0.5*k*(L_sp_low - L_sp0)^2;
             % calculate desired energy
             dL = abs(-x_td(6)*sin(x_td(3)+x_td(5))+x_td(7)*cos(x_td(3)+x_td(5))); %length speed at touch down
-            E_des = m1*g*(H+Terrain(x(n,1)+x(n,6)*t_prev_stance/2))...
+            E_des = m1*g*(H+Terrain(x(n,1)+x(n,6)*t_prev_stance/2,ter_i))...
                 + pi/4*d*dL*(L_sp0-L_sp_low) + 0.5*m1*dx_des^2;
             
             k_des = k + 2*(E_des-E_low)/(L_sp0-L_sp_low)^2;
@@ -309,11 +311,11 @@ if fflag
     fp(4) = plot(T,X(:,3),'g','LineWidth',2);
     fp(5) = plot(T,X(:,4),'k','LineWidth',2);
     fp(6) = plot(T,X(:,5),'m','LineWidth',2);
-    fp(7) = plot(T,X(:,6),'b--','LineWidth',2);
-    fp(8) = plot(T,X(:,7),'r--','LineWidth',2);
-    fp(9) = plot(T,X(:,8),'g--','LineWidth',2);
-    fp(10) = plot(T,X(:,9),'k--','LineWidth',2);
-    fp(11) = plot(T,X(:,10),'m--','LineWidth',2);
+    fp(7) = plot(T,X(:,6),'b--','LineWidth',1);
+    fp(8) = plot(T,X(:,7),'r--','LineWidth',1);
+    fp(9) = plot(T,X(:,8),'g--','LineWidth',1);
+    fp(10) = plot(T,X(:,9),'k--','LineWidth',1);
+    fp(11) = plot(T,X(:,10),'m--','LineWidth',1);
     fp(12) = plot([T(1) T(size(T,1))], [target_pos target_pos],'r--','LineWidth',1);
     hold off
     
@@ -334,8 +336,8 @@ if fflag
     figure;
     plot(T,X(:,3),'g','LineWidth',2); hold on;
     plot(T,X(:,5),'m','LineWidth',2); hold on;
-    plot(T,X(:,8),'g--','LineWidth',2); hold on;
-    plot(T,X(:,10),'m--','LineWidth',2);
+    plot(T,X(:,8),'g--','LineWidth',1); hold on;
+    plot(T,X(:,10),'m--','LineWidth',1);
     legend('theta (rad)' ,'phi (rad)', 'dtheta (rad/s)','dphi (rad/s)');
     title('\fontsize{12}\fontname{Arial Black}Angle plot');
     
@@ -349,7 +351,7 @@ if fflag
     
     figure;
     plot(T,X(:,4),'k','LineWidth',2);hold on;
-    plot(T,X(:,9),'k--','LineWidth',2);
+    plot(T,X(:,9),'k--','LineWidth',1);
     legend('s (m)', 'ds (m/s)');
     title('\fontsize{12}\fontname{Arial Black}spring length plot');
     axis([0 T(size(T,1)) -2 2]);
@@ -405,13 +407,20 @@ if aflag
         axis equal; axis([boarderL boarderR -0.1 boarderT])
 
         % Plot ground
+        edge = Terrain_edge(ter_i);
         groundL = floor(boarderL);
         groundR = ceil(boarderR);
-        for i = groundL:groundR-1
-            fill([i i+1 i+1 i],[Terrain(i) Terrain(i+1) -0.1 -0.1],[0 0 0],'EdgeColor',[0 0 0]);
+        for i = 1:size(edge,1)+1
+            if i == 1
+                fill([groundL edge(i,1) edge(i,1) groundL],[Terrain(groundL,ter_i) Terrain(edge(i,1),ter_i) -0.1 -0.1],[0 0 0],'EdgeColor',[0 0 0]);
+            elseif i == size(edge,1)+1
+                fill([edge(i-1,1) groundR groundR edge(i-1,1)],[Terrain(edge(i-1,1),ter_i) Terrain(groundR,ter_i) -0.1 -0.1],[0 0 0],'EdgeColor',[0 0 0]);
+            else
+                fill([edge(i-1,1) edge(i,1) edge(i,1) edge(i-1,1)],[Terrain(edge(i-1,1),ter_i) Terrain(edge(i,1),ter_i) -0.1 -0.1],[0 0 0],'EdgeColor',[0 0 0]);
+            end
         end
         % Plot target position
-        scatter(target_pos,Terrain(target_pos),50,'MarkerEdgeColor','b',...
+        scatter(target_pos,Terrain(target_pos,ter_i),50,'MarkerEdgeColor','b',...
                   'MarkerFaceColor','g',...
                   'LineWidth',1);
         
@@ -427,14 +436,14 @@ if aflag
                   'LineWidth',1.5);
         plot([links(1,1) links(1,2)],[links(2,1) links(2,2)],'b','LineWidth',5);
         % Plot m2 
-        scatter(links(1,4), links(2,4),40,'MarkerEdgeColor',[0 0 0],...
-                  'MarkerFaceColor',[0 0 0],...
-                  'LineWidth',1.5);
+%         scatter(links(1,4), links(2,4),40,'MarkerEdgeColor',[0 0 0],...
+%                   'MarkerFaceColor',[0 0 0],...
+%                   'LineWidth',1.5);
         % Display time on plot
         tc = T(ti);     % current time
-        text(0.8*boarderL,0.2*boarderT,'\fontsize{10}\fontname{Arial Black}elapsed time:')
+        text(0.8*boarderL,0.2*boarderT,'\fontsize{10}\fontname{Arial Black}elapsed time:','color','y')
         text(0.8*boarderL,0.1*boarderT,['\fontsize{10}\fontname{Arial Black}' ...
-            num2str(tc,'%1.1f') ' sec'])
+            num2str(tc,'%1.1f') ' sec'],'color','y')
         % Display states on plot
         sc = S(ti);     % current state
         text(0.8*boarderL,0.9*boarderT,'\fontsize{10}\fontname{Arial Black}Flight')
