@@ -17,7 +17,7 @@ clear,clc
 addpath('EOM','EventsFcn','Controller','Animation','Terrain');
 
 % settings
-fflag = 0;          % flag to enable figure plot (don't enable this with animation at the same time)
+fflag = 1;          % flag to enable figure plot (don't enable this with animation at the same time)
 aflag = not(fflag); % flag to enable anima3tion creation
 vflag = not(fflag); % flag to enable animation recording (create a avi video)
 fignum = 1;         % figure number

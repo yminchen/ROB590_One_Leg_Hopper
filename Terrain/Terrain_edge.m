@@ -1,6 +1,10 @@
 function edge = Terrain_edge(terrain_label)
 
-if terrain_label == 1
+if terrain_label == 0
+    edge = [0 0
+            2 0];
+        
+elseif terrain_label == 1
     edge = [2 0
             4 0.5
             6 0];
